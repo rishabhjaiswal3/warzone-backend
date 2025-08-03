@@ -18,4 +18,4 @@ const PlayerProfileSchema = new mongoose.Schema({
   PlayerTutorialData: Object
 }, { timestamps: true });
 
-module.exports = mongoose.model('PlayerProfile', PlayerProfileSchema);
+module.exports = mongoose.model('WarzonePlayerProfile', PlayerProfileSchema);
