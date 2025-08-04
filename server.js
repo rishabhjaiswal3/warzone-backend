@@ -7,33 +7,19 @@ const profileRoutes = require('./routes/profileRoutes');
 dotenv.config();
 const app = express();
 
-// Configure CORS with allowed origins and credentials
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://warzonewarriors.xyz',
-  'https://www.warzonewarriors.xyz'
-];
+// Configure CORS to allow all origins
+// const corsOptions = {
+//   origin: true, // Allow all origins
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   exposedHeaders: ['Content-Range', 'X-Content-Range']
+// };
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
-};
+// app.use(cors(corsOptions));
+// app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
-
+app.use(cors());
 app.use(express.json());
 
 // Rest of your server.js code
