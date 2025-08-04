@@ -12,7 +12,7 @@ const generateDefaultName = async () => {
     { $inc: { seq: 1 } },
     { new: true, upsert: true }
   );
-  return `Player${counter.seq}`;
+  return `JohnDigger${counter.seq}`;
 };
 
 const defaultData = {
@@ -77,7 +77,7 @@ exports.getLeaderboard = async (req, res) => {
 
     const leaderboardWithNames = leaderboard.map(profile => ({
       ...profile,
-      name: nameMap[profile.walletAddress] || `Player${Math.floor(Math.random() * 1000)}`
+      name: nameMap[profile.walletAddress] || `JohnDigger${Math.floor(Math.random() * 1000)}`
     }));
 
     res.json(leaderboardWithNames);
