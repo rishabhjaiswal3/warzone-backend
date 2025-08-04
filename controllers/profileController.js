@@ -104,8 +104,7 @@ exports.saveName = async (req, res) => {
   const { name } = req.body;
   const walletAddress = req.walletAddress;
   if (!walletAddress || !name) return res.status(400).json({ error: 'walletAddress and name are required' });
-  let profile = await WarzoneNameWallet.findOne({ walletAddress });
-  if (!profile) profile = new WarzoneNameWallet({ walletAddress, name });
+  let profile = new WarzoneNameWallet({ walletAddress, name });
   await profile.save();
   res.json({ success: true, message: 'Name saved successfully' });
 };
