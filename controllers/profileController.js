@@ -100,13 +100,51 @@ exports.checkNameExistance = async (req, res) => {
 }
 
 exports.saveName = async (req, res) => {
+  try {
+    const { name } = req.body;
+    const walletAddress = req.walletAddress;
+    
+    if (!walletAddress || !name) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Wallet address and name are required' 
+      });
+    }
 
-  const { name } = req.body;
-  const walletAddress = req.walletAddress;
-  if (!walletAddress || !name) return res.status(400).json({ error: 'walletAddress and name are required' });
-  let profile = new WarzoneNameWallet({ walletAddress, name });
-  await profile.save();
-  res.json({ success: true, message: 'Name saved successfully' });
+    // Check if name already exists for another wallet
+    const existingName = await WarzoneNameWallet.findOne({ name });
+    if (existingName && existingName.walletAddress !== walletAddress) {
+      return res.status(400).json({
+        success: false,
+        error: 'Name is already taken'
+      });
+    }
+
+    // Find and update or create new
+    const profile = await WarzoneNameWallet.findOneAndUpdate(
+      { walletAddress },
+      { name, isDefaultName: false },
+      { 
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true 
+      }
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Name saved successfully',
+      data: profile
+    });
+
+  } catch (error) {
+    console.error('Error saving name:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 };
 
 exports.getName = async (req, res) => {
