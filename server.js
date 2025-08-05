@@ -16,7 +16,13 @@ const app = express();
 // };
 
 // ✅ Use CORS with those options
-app.use(cors());
+const corsOptions = {
+  origin: 'https://warzonewarriors.xyz', // ✅ allow entire frontend domain
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
 
 // ✅ Handle preflight requests manually (if needed)
 // app.options('*', cors(corsOptions));
