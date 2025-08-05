@@ -8,12 +8,12 @@ dotenv.config();
 const app = express();
 
 const corsOptions = {
-  origin: true, // Reflect the request origin
-  credentials: true,
+  origin: '*', // Allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 };
+
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
