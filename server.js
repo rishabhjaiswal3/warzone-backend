@@ -19,7 +19,7 @@ const app = express();
 const corsOptions = {
   origin: 'https://warzonewarriors.xyz', // ✅ allow entire frontend domain
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', '*'],
 };
 
 app.use(cors(corsOptions));
