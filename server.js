@@ -8,15 +8,46 @@ dotenv.config();
 const app = express();
 
 // CORS configuration - explicitly allow your frontend domain
+// const corsOptions = {
+//   origin: [
+//     'https://www.warzonewarriors.xyz',
+//     'https://warzonewarriors.xyz',
+//     'http://www.warzonewarriors.xyz',
+//     'http://warzonewarriors.xyz',
+//     'http://localhost:3000', // For local development
+//     'http://localhost:3001'  // For local development
+//   ],
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+//   allowedHeaders: [
+//     'Origin',
+//     'X-Requested-With',
+//     'Content-Type',
+//     'Accept',
+//     'Authorization',
+//     'Cache-Control',
+//     'X-HTTP-Method-Override'
+//   ],
+//   credentials: true, // Allow cookies and auth headers
+//   optionsSuccessStatus: 200 // For legacy browser support
+// };
+
+const allowedOrigins = [
+  'https://www.warzonewarriors.xyz',
+  'https://warzonewarriors.xyz',
+  'http://www.warzonewarriors.xyz',
+  'http://warzonewarriors.xyz',
+  'http://localhost:3000',
+  'http://localhost:3001'
+];
+
 const corsOptions = {
-  origin: [
-    'https://www.warzonewarriors.xyz',
-    'https://warzonewarriors.xyz',
-    'http://www.warzonewarriors.xyz',
-    'http://warzonewarriors.xyz',
-    'http://localhost:3000', // For local development
-    'http://localhost:3001'  // For local development
-  ],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Origin',
@@ -27,9 +58,10 @@ const corsOptions = {
     'Cache-Control',
     'X-HTTP-Method-Override'
   ],
-  credentials: true, // Allow cookies and auth headers
-  optionsSuccessStatus: 200 // For legacy browser support
+  credentials: true,
+  optionsSuccessStatus: 200
 };
+
 
 app.use(cors(corsOptions));
 
@@ -95,30 +127,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Accepting requests from: warzonewarriors.xyz`);
   console.log(`📡 CORS enabled for cross-origin requests`);
 });
-
-// const express = require('express');
-// const mongoose = require('mongoose');
-// const cors = require('cors');
-// const dotenv = require('dotenv');
-// const profileRoutes = require('./routes/profileRoutes');
-
-// dotenv.config();
-// const app = express();
-
-// app.use(cors());
-
-// app.use(express.json());
-
-// // Routes
-// app.use('/warzone', profileRoutes);
-
-// // DB connection
-// mongoose.connect(process.env.MONGO_URI, {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true
-// }).then(() => console.log('MongoDB connected'))
-//   .catch(err => console.error('MongoDB connection error:', err));
-
-// // Start server
-// const PORT = process.env.PORT || 3300;
-// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
