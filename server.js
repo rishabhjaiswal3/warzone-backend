@@ -7,19 +7,17 @@ const profileRoutes = require('./routes/profileRoutes');
 dotenv.config();
 const app = express();
 
-// Configure CORS to allow all origins
-// const corsOptions = {
-//   origin: true, // Allow all origins
-//   credentials: true,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-//   exposedHeaders: ['Content-Range', 'X-Content-Range']
-// };
+const corsOptions = {
+  origin: true, // Reflect the request origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+};
 
-// app.use(cors(corsOptions));
-// app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
 
-app.use(cors());
 app.use(express.json());
 
 // Rest of your server.js code
