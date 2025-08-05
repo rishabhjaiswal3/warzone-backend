@@ -8,7 +8,12 @@ dotenv.config();
 const app = express();
 
 const corsOptions = {
-  origin: true, // Allows ALL origins/websites
+  origin: [
+    'https://warzonewarriors.xyz',
+    'https://www.warzonewarriors.xyz',
+    'http://warzonewarriors.xyz',
+    'http://www.warzonewarriors.xyz'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
