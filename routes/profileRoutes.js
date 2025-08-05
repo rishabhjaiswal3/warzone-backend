@@ -4,10 +4,12 @@ const { getProfile, saveProfile,getLeaderboard,checkNameExistance, saveName, get
 const verifyUser = require('../routes/middleware/verifyUser');
 router.get('/', getProfile);
 router.post('/', saveProfile);
+
 router.get('/leaderboard',getLeaderboard);
-router.post('/name', checkNameExistance);
-router.post('/saveName',verifyUser, saveName);
 router.get('/name', verifyUser, getName)
+
 router.post('/login',login);
+router.post('/user/name', checkNameExistance);
+router.post('/user/account/saveName', saveName);
 
 module.exports = router;

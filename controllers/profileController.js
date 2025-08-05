@@ -101,8 +101,7 @@ exports.checkNameExistance = async (req, res) => {
 
 exports.saveName = async (req, res) => {
   try {
-    const { name } = req.body;
-    const walletAddress = req.walletAddress;
+    const { name, walletAddress } = req.body;
     
     if (!walletAddress || !name) {
       return res.status(400).json({ 
