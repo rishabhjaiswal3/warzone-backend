@@ -79,16 +79,16 @@ exports.saveProfile = async (req, res) => {
 
 
 exports.getProfile = async (req, res) => {
-  const { walletAddress } = req.query;
-  if (!walletAddress) return res.status(400).json({ error: 'walletAddress is required' });
-
-  let profile = await PlayerProfile.findOne({ walletAddress });
-  if (!profile) {
-    profile = new PlayerProfile({ walletAddress, ...defaultData });
-    await profile.save();
+  try {
+    const { data:shouldUpdate, walletAddress, ...data } = req.body;
+   
+    const profile = await getWalletProfile(walletAddress);
+    return res.json(profile);
   }
-  res.json(profile);
-};
+  catch(error){
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}; 
 
 
 exports.getLeaderboard = async (req, res) => {
