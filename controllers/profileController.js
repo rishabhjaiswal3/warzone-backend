@@ -32,6 +32,54 @@ const defaultData = {
   PlayerTutorialData: {}
 };
 
+const getWalletProfile = async (walletAddress) => {
+  try {
+    let profile = await PlayerProfile.findOne({ walletAddress });
+    if (!profile) {
+      profile = new PlayerProfile({ 
+        walletAddress, 
+        // Make sure defaultData is defined in the scope
+        ...(defaultData || {}) 
+      });
+      await profile.save();
+    }
+    return profile;
+  } catch(error) {
+    console.error('Error in getProfile:', error);
+    throw error; // Consider re-throwing to handle it in the route
+  }
+}
+
+exports.saveProfile = async (req, res) => {
+
+  try {
+
+    const { walletAddress, ...data } = req.body;
+  
+    const shouldUpdate = req.query.updateData === 'true';
+  
+    if(shouldUpdate){
+      const profile = await getWalletProfile(walletAddress);
+      return res.json(profile);
+    }
+  
+    if (!walletAddress) return res.status(400).json({ error: 'walletAddress is required' });
+  
+    let profile = await PlayerProfile.findOne({ walletAddress });
+    if (!profile) profile = new PlayerProfile({ walletAddress });
+  
+    Object.assign(profile, data);
+    await profile.save();
+  
+    return res.json(await getWalletProfile(walletAddress));
+  }
+  catch(error) {
+    console.error('Error in saveProfile:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
 exports.getProfile = async (req, res) => {
   const { walletAddress } = req.query;
   if (!walletAddress) return res.status(400).json({ error: 'walletAddress is required' });
@@ -44,18 +92,6 @@ exports.getProfile = async (req, res) => {
   res.json(profile);
 };
 
-exports.saveProfile = async (req, res) => {
-  const { walletAddress, ...data } = req.body;
-  if (!walletAddress) return res.status(400).json({ error: 'walletAddress is required' });
-
-  let profile = await PlayerProfile.findOne({ walletAddress });
-  if (!profile) profile = new PlayerProfile({ walletAddress });
-
-  Object.assign(profile, data);
-  await profile.save();
-
-  res.json({ success: true, message: 'Profile saved successfully' });
-};
 
 exports.getLeaderboard = async (req, res) => {
   try {
