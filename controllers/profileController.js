@@ -54,20 +54,8 @@ exports.saveProfile = async (req, res) => {
 
   try {
 
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
-
-    const { walletAddress, ...data } = req.body;
-  
-    const shouldUpdate = req.query.data === 'true';
-  
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-
-    
+    const { data:shouldUpdate, walletAddress, ...data } = req.body;
+   
     if(shouldUpdate){
       const profile = await getWalletProfile(walletAddress);
       return res.json(profile);

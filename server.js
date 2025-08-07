@@ -7,30 +7,6 @@ const profileRoutes = require('./routes/profileRoutes');
 dotenv.config();
 const app = express();
 
-// CORS configuration - explicitly allow your frontend domain
-// const corsOptions = {
-//   origin: [
-//     'https://www.warzonewarriors.xyz',
-//     'https://warzonewarriors.xyz',
-//     'http://www.warzonewarriors.xyz',
-//     'http://warzonewarriors.xyz',
-//     'http://localhost:3000', // For local development
-//     'http://localhost:3001'  // For local development
-//   ],
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-//   allowedHeaders: [
-//     'Origin',
-//     'X-Requested-With',
-//     'Content-Type',
-//     'Accept',
-//     'Authorization',
-//     'Cache-Control',
-//     'X-HTTP-Method-Override'
-//   ],
-//   credentials: true, // Allow cookies and auth headers
-//   optionsSuccessStatus: 200 // For legacy browser support
-// };
-
 const allowedOrigins = [
   'https://www.warzonewarriors.xyz',
   'https://warzonewarriors.xyz',
