@@ -54,23 +54,33 @@ exports.saveProfile = async (req, res) => {
 
   try {
 
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+
     const { walletAddress, ...data } = req.body;
   
     const shouldUpdate = req.query.data === 'true';
   
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+
+    
     if(shouldUpdate){
       const profile = await getWalletProfile(walletAddress);
       return res.json(profile);
     }
-  
+
     if (!walletAddress) return res.status(400).json({ error: 'walletAddress is required' });
-  
+
     let profile = await PlayerProfile.findOne({ walletAddress });
     if (!profile) profile = new PlayerProfile({ walletAddress });
-  
+
     Object.assign(profile, data);
     await profile.save();
-  
+
     return res.json(await getWalletProfile(walletAddress));
   }
   catch(error) {
