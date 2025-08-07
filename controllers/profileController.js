@@ -56,7 +56,7 @@ exports.saveProfile = async (req, res) => {
 
     const { walletAddress, ...data } = req.body;
   
-    const shouldUpdate = req.query.updateData === 'true';
+    const shouldUpdate = req.query.data === 'true';
   
     if(shouldUpdate){
       const profile = await getWalletProfile(walletAddress);
