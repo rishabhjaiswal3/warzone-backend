@@ -55,16 +55,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/', profileRoutes);
+app.use('/warzone', profileRoutes);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
-  });
-});
 
 // Routes
 
