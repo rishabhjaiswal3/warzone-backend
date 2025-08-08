@@ -55,7 +55,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/warzone', profileRoutes);
+app.use('/', profileRoutes);
 
 
 // Routes
