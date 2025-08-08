@@ -80,7 +80,7 @@ exports.saveProfile = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const { data:shouldUpdate, walletAddress, ...data } = req.body;
+    const walletAddress = req.query.walletAddress;
    
     const profile = await getWalletProfile(walletAddress);
     return res.json(profile);
