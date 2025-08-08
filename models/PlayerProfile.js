@@ -23,9 +23,11 @@
 
 //New
 
+// models/PlayerProfile.js
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
+// ----- Sub-schemas -----
 const GunSchema = new Schema({
   id: { type: Number, required: true },
   level: { type: Number, default: 1 },
@@ -46,6 +48,14 @@ const MeleeSchema = new Schema({
   isNew: { type: Boolean, default: false }
 }, { _id: false });
 
+// Allow an item field literally named "type"
+const DailyQuestSchema = new Schema({
+  type:      { $type: Number, required: true, min: 0 },
+  progress:  { $type: Number, required: true, min: 0 },
+  isClaimed: { $type: Boolean, required: true }
+}, { _id: false, typeKey: '$type' });
+
+// ----- Main schema -----
 const PlayerProfileSchema = new Schema({
   walletAddress: { type: String, required: true, unique: true, index: true },
 
@@ -62,34 +72,32 @@ const PlayerProfileSchema = new Schema({
     tournamentTicket: { type: Number, default: 0 }
   },
 
-  // Use Map<string, Rambo>
+  // Map<string, {id, level}>
   PlayerRambos: { type: Map, of: new Schema({ id: Number, level: Number }, { _id: false }), default: {} },
 
   // Map<string, Map<string, number>>
   PlayerRamboSkills: { type: Map, of: { type: Map, of: Number }, default: {} },
 
-  // Maps for inventories
+  // Inventories as Map<string, subdoc>
   PlayerGuns: { type: Map, of: GunSchema, default: {} },
   PlayerGrenades: { type: Map, of: GrenadeSchema, default: {} },
   PlayerMeleeWeapons: { type: Map, of: MeleeSchema, default: {} },
 
-  // LEGACY: keep non-null so Unity migration never crashes
+  // Keep these as objects (never null) for Unity
   PlayerCampaignProgress: { type: Map, of: Schema.Types.Mixed, default: {} },
-
-  // NEW canonical field — ALWAYS an object, never null
   PlayerCampaignStageProgress: { type: Map, of: [Boolean], default: {} },
-
   PlayerCampaignRewardProgress: { type: Map, of: Schema.Types.Mixed, default: {} },
 
   // Boosters as numeric-string keys -> number
   PlayerBoosters: { type: Map, of: Number, default: {} },
 
   PlayerSelectingBooster: { type: [Number], default: [] },
-  PlayerDailyQuestData: {
-    type: [{ type: Number, progress: Number, isClaimed: Boolean }],
-    default: []
-  },
+
+  // IMPORTANT: use $type so "type" inside items is allowed
+  PlayerDailyQuestData: { $type: [DailyQuestSchema], default: [] },
+
   PlayerAchievementData: { type: Map, of: Schema.Types.Mixed, default: {} },
+
   PlayerTutorialData: {
     Character: { type: Boolean, default: false },
     Booster: { type: Boolean, default: false },
@@ -97,8 +105,9 @@ const PlayerProfileSchema = new Schema({
   }
 }, {
   timestamps: true,
-  minimize: false,      // <-- keep empty {}
-  versionKey: false
+  minimize: false,
+  versionKey: false,
+  typeKey: '$type' // make $type the schema’s type key globally in this schema
 });
 
 module.exports = mongoose.model('WarzonePlayerProfile', PlayerProfileSchema);
