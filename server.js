@@ -55,6 +55,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/', profileRoutes);
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -65,7 +67,6 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
-app.use('/warzone', profileRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
