@@ -206,7 +206,52 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-/* ---------- inventories ---------- */
+/* ---------------- dot-key helpers (for keys like "1.1") ---------------- */
+const DOT_ENC = '__dot__';
+
+function encodeObjKeys(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(input)) {
+    out[String(k).replace(/\./g, DOT_ENC)] = v;
+  }
+  return out;
+}
+function decodeObjKeys(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    out[String(k).replace(new RegExp(DOT_ENC, 'g'), '.')] = v;
+  }
+  return out;
+}
+
+/* ---- Legacy CampaignProgress (object-of-objects) ---- */
+function encodeCampaignProgressObj(input) { return encodeObjKeys(input); }
+function decodeCampaignProgressObj(obj)   { return decodeObjKeys(obj); }
+
+/* ---- StageProgress (Map<string, [bool,bool,bool]>) ---- */
+function normalizeStageArray(val) {
+  if (!Array.isArray(val)) return [false, false, false];
+  // exactly 3 booleans: [easy, normal, crazy]
+  return [Boolean(val[0]), Boolean(val[1]), Boolean(val[2])];
+}
+function encodeStageProgressObj(input) {
+  const encoded = encodeObjKeys(input);
+  for (const k of Object.keys(encoded)) {
+    encoded[k] = normalizeStageArray(encoded[k]);
+  }
+  return encoded;
+}
+function decodeStageProgressObj(obj) {
+  const decoded = decodeObjKeys(obj);
+  for (const k of Object.keys(decoded)) {
+    decoded[k] = normalizeStageArray(decoded[k]);
+  }
+  return decoded;
+}
+
+/* ---------------- inventories ---------------- */
 const GunSchema = new Schema({
   id: { type: Number, required: true },
   level: { type: Number, default: 1 },
@@ -227,14 +272,14 @@ const MeleeSchema = new Schema({
   isNew: { type: Boolean, default: false }
 }, { _id: false });
 
-/* ---- daily quest with literal type ---- */
+/* ---- daily quest with literal "type" ---- */
 const DailyQuestSchema = new Schema({
   type:      { $type: Number, required: true, min: 0 },
   progress:  { $type: Number, required: true, min: 0 },
   isClaimed: { $type: Boolean, required: true }
 }, { _id: false, typeKey: '$type' });
 
-/* ---------- main schema ---------- */
+/* ---------------- main schema ---------------- */
 const PlayerProfileSchema = new Schema({
   walletAddress: { type: String, required: true, unique: true, index: true },
 
@@ -258,11 +303,25 @@ const PlayerProfileSchema = new Schema({
   PlayerGrenades:    { type: Map, of: GrenadeSchema, default: {} },
   PlayerMeleeWeapons:{ type: Map, of: MeleeSchema,   default: {} },
 
-  // Legacy campaign progress (kept empty)
-  PlayerCampaignProgress: { type: Schema.Types.Mixed, default: {} },
+  // Legacy campaign progress (kept empty but dot-safe)
+  PlayerCampaignProgress: {
+    type: Schema.Types.Mixed,
+    default: {},
+    set: encodeCampaignProgressObj,
+    get: decodeCampaignProgressObj
+  },
 
-  // Actual stage progress
-  PlayerCampaignStageProgress: { type: Map, of: [Boolean], default: {} },
+  // Actual stage progress (dot-safe keys + fixed-size boolean arrays)
+  PlayerCampaignStageProgress: {
+    type: Map,
+    of: {
+      type: [Boolean],
+      validate: v => Array.isArray(v) && v.length === 3
+    },
+    default: {},
+    set: encodeStageProgressObj,
+    get: decodeStageProgressObj
+  },
 
   PlayerCampaignRewardProgress: { type: Map, of: Schema.Types.Mixed, default: {} },
 
@@ -282,8 +341,10 @@ const PlayerProfileSchema = new Schema({
 
 }, {
   timestamps: true,
-  minimize: false,
-  versionKey: false
+  minimize: false,                 // keep empty {}
+  versionKey: false,
+  toJSON:   { getters: true },     // make sure decode getters run in API responses
+  toObject: { getters: true }
 });
 
 module.exports = mongoose.models.WarzonePlayerProfile
