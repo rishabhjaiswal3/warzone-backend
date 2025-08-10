@@ -85,6 +85,11 @@
 
 
 // models/PlayerProfile.js
+
+
+//New
+
+// models/PlayerProfile.js
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
@@ -92,17 +97,24 @@ const { Schema } = mongoose;
 const DOT_ENC = '__dot__';
 
 function encodeCampaignProgress(input) {
+  // Accept Map or plain object; return Map with encoded keys
   const m = new Map();
   if (!input) return m;
-  const it = input instanceof Map ? input.entries() : Object.entries(input);
-  for (const [k, v] of it) m.set(String(k).replace(/\./g, DOT_ENC), v);
+  const entries = input instanceof Map ? input.entries() : Object.entries(input);
+  for (const [k, v] of entries) {
+    m.set(String(k).replace(/\./g, DOT_ENC), v);
+  }
   return m;
 }
+
 function decodeCampaignProgress(mapOrObj) {
+  // Accept Map or plain object; return plain object with decoded keys
   const out = {};
   if (!mapOrObj) return out;
-  const it = mapOrObj instanceof Map ? mapOrObj.entries() : Object.entries(mapOrObj);
-  for (const [k, v] of it) out[String(k).replace(new RegExp(DOT_ENC, 'g'), '.')] = v;
+  const entries = mapOrObj instanceof Map ? mapOrObj.entries() : Object.entries(mapOrObj);
+  for (const [k, v] of entries) {
+    out[String(k).replace(new RegExp(DOT_ENC, 'g'), '.')] = v;
+  }
   return out;
 }
 
@@ -191,8 +203,9 @@ const PlayerProfileSchema = new Schema({
   timestamps: true,
   minimize: false,
   versionKey: false,
-  toJSON:   { getters: true },   // ensure decode getter runs in responses
+  toJSON:   { getters: true },   // ensure decode getter runs in API responses
   toObject: { getters: true }
 });
 
 module.exports = mongoose.model('WarzonePlayerProfile', PlayerProfileSchema);
+
