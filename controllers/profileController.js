@@ -785,7 +785,7 @@ const defaultData = {
   PlayerCampaignStageProgress: {},
   PlayerCampaignRewardProgress: {},
 
-  // Boosters (keep your preferred shape; client should be consistent)
+  // Boosters
   PlayerBoosters: { Hp: 0, Grenade: 0, Damage: 0, CoinMagnet: 0, Speed: 0, Critical: 0 },
 
   PlayerSelectingBooster: [],
@@ -813,7 +813,6 @@ function normalizeProfile(obj) {
   };
   for (const [k, v] of Object.entries(defaultData)) ensure(k, v);
 
-  // extra guards
   if (obj.PlayerCampaignProgress == null) obj.PlayerCampaignProgress = {};
   if (obj.PlayerCampaignStageProgress == null) obj.PlayerCampaignStageProgress = {};
   if (obj.PlayerCampaignRewardProgress == null) obj.PlayerCampaignRewardProgress = {};
@@ -828,7 +827,7 @@ function normalizeProfile(obj) {
 const getWalletProfile = async (walletAddress) => {
   if (!walletAddress) throw new Error('walletAddress required');
 
-  // Do NOT use .lean() so schema getters (e.g., dot-key decode) run.
+  // Avoid .lean() so schema getters (e.g., dot-key decode) run
   let profile = await PlayerProfile.findOne({ walletAddress });
 
   if (!profile) {
@@ -864,14 +863,13 @@ exports.saveProfile = async (req, res) => {
     // Always keep legacy empty
     data.PlayerCampaignProgress = {};
 
-    // The canonical field Unity now sends/reads
+    // Canonical field Unity now sends/reads
     if (data.PlayerCampaignStageProgress == null) {
       data.PlayerCampaignStageProgress = {};
     }
 
     // Shallow merge user payload into doc
-    // NOTE: If your model uses set/get to encode/decode dot-keys,
-    // assigning and then saving will run setters properly.
+    // NOTE: Model setters (dot-key encode/normalize) run on save.
     Object.assign(profile, data);
     normalizeProfile(profile);
 
@@ -1029,5 +1027,6 @@ exports.login = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error during authentication' });
   }
 };
+
 
 
