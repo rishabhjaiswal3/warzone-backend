@@ -760,154 +760,89 @@
 
 //Final
 
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
+// controllers/profileController.js
+const PlayerProfile = require('../models/PlayerProfile');
 
-/* ---------------- dot-key helpers (for keys like "1.1") ---------------- */
-const DOT_ENC = '__dot__';
+exports.getProfile = async (req, res) => {
+  try {
+    const { walletAddress } = req.query;
+    if (!walletAddress) {
+      return res.status(400).json({ error: 'walletAddress is required' });
+    }
 
-function encodeObjKeys(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
-  const out = {};
-  for (const [k, v] of Object.entries(input)) {
-    out[String(k).replace(/\./g, DOT_ENC)] = v;
+    let profile = await PlayerProfile.findOne({ walletAddress }).lean();
+
+    // If no profile, create with defaults
+    if (!profile) {
+      profile = await PlayerProfile.create({
+        walletAddress,
+        // Everything else will use schema defaults
+      });
+    }
+
+    // Always send PlayerCampaignProgress empty
+    profile.PlayerCampaignProgress = {};
+
+    return res.json(profile);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
-  return out;
-}
-function decodeObjKeys(obj) {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {};
-  const out = {};
-  for (const [k, v] of Object.entries(obj)) {
-    out[String(k).replace(new RegExp(DOT_ENC, 'g'), '.')] = v;
+};
+
+exports.saveProfile = async (req, res) => {
+  try {
+    const {
+      walletAddress,
+      PlayerProfile: playerProfile,
+      PlayerResources,
+      PlayerRambos,
+      PlayerRamboSkills,
+      PlayerGuns,
+      PlayerGrenades,
+      PlayerMeleeWeapons,
+      PlayerCampaignStageProgress,
+      PlayerCampaignRewardProgress,
+      PlayerBoosters,
+      PlayerSelectingBooster,
+      PlayerDailyQuestData,
+      PlayerAchievementData,
+      PlayerTutorialData
+    } = req.body;
+
+    if (!walletAddress) {
+      return res.status(400).json({ error: 'walletAddress is required' });
+    }
+
+    const updateData = {
+      PlayerProfile: playerProfile,
+      PlayerResources,
+      PlayerRambos,
+      PlayerRamboSkills,
+      PlayerGuns,
+      PlayerGrenades,
+      PlayerMeleeWeapons,
+      PlayerCampaignProgress: {}, // keep it empty
+      PlayerCampaignStageProgress: PlayerCampaignStageProgress || {},
+      PlayerCampaignRewardProgress,
+      PlayerBoosters,
+      PlayerSelectingBooster,
+      PlayerDailyQuestData,
+      PlayerAchievementData,
+      PlayerTutorialData
+    };
+
+    const updated = await PlayerProfile.findOneAndUpdate(
+      { walletAddress },
+      { $set: updateData },
+      { upsert: true, new: true }
+    );
+
+    return res.json({ success: true, profile: updated });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
-  return out;
-}
-
-/* ---- Legacy CampaignProgress (object-of-objects) ---- */
-function encodeCampaignProgressObj(input) { return encodeObjKeys(input); }
-function decodeCampaignProgressObj(obj)   { return decodeObjKeys(obj); }
-
-/* ---- StageProgress (Map<string, [bool,bool,bool]>) ---- */
-function normalizeStageArray(val) {
-  if (!Array.isArray(val)) return [false, false, false];
-  const out = [false, false, false];
-  for (let i = 0; i < 3; i++) out[i] = Boolean(val[i]);
-  return out;
-}
-function encodeStageProgressObj(input) {
-  const encoded = encodeObjKeys(input);
-  for (const k of Object.keys(encoded)) {
-    encoded[k] = normalizeStageArray(encoded[k]);
-  }
-  return encoded;
-}
-function decodeStageProgressObj(obj) {
-  const decoded = decodeObjKeys(obj);
-  for (const k of Object.keys(decoded)) {
-    decoded[k] = normalizeStageArray(decoded[k]);
-  }
-  return decoded;
-}
-
-/* ---------------- inventories ---------------- */
-const GunSchema = new Schema({
-  id: { type: Number, required: true },
-  level: { type: Number, default: 1 },
-  ammo: { type: Number, default: 0 },
-  isNew: { type: Boolean, default: false }
-}, { _id: false });
-
-const GrenadeSchema = new Schema({
-  id: { type: Number, required: true },
-  level: { type: Number, default: 1 },
-  quantity: { type: Number, default: 0 },
-  isNew: { type: Boolean, default: false }
-}, { _id: false });
-
-const MeleeSchema = new Schema({
-  id: { type: Number, required: true },
-  level: { type: Number, default: 1 },
-  isNew: { type: Boolean, default: false }
-}, { _id: false });
-
-/* ---- ONLY this sub-schema needs a literal field named "type" ---- */
-const DailyQuestSchema = new Schema({
-  type:      { $type: Number, required: true, min: 0 },
-  progress:  { $type: Number, required: true, min: 0 },
-  isClaimed: { $type: Boolean, required: true }
-}, { _id: false, typeKey: '$type' });
-
-/* ---------------- main schema ---------------- */
-const PlayerProfileSchema = new Schema({
-  walletAddress: { type: String, required: true, unique: true, index: true },
-
-  PlayerProfile: {
-    level: { type: Number, default: 1 },
-    exp:   { type: Number, default: 0 }
-  },
-
-  PlayerResources: {
-    coin: { type: Number, default: 1000 },
-    gem:  { type: Number, default: 0 },
-    stamina: { type: Number, default: 0 },
-    medal:   { type: Number, default: 0 },
-    tournamentTicket: { type: Number, default: 0 }
-  },
-
-  // Map<string, {id, level}>
-  PlayerRambos: { type: Map, of: new Schema({ id: Number, level: Number }, { _id: false }), default: {} },
-
-  // Map<string, Map<string, number>>
-  PlayerRamboSkills: { type: Map, of: { type: Map, of: Number }, default: {} },
-
-  // inventories as Map<string, subdoc>
-  PlayerGuns:        { type: Map, of: GunSchema,     default: {} },
-  PlayerGrenades:    { type: Map, of: GrenadeSchema, default: {} },
-  PlayerMeleeWeapons:{ type: Map, of: MeleeSchema,   default: {} },
-
-  // Legacy Campaign progress (object): accept dotted keys, store encoded, return decoded
-  PlayerCampaignProgress: {
-    type: Schema.Types.Mixed,
-    default: {},
-    set: encodeCampaignProgressObj,
-    get: decodeCampaignProgressObj
-  },
-
-  // Stage progress: Map<string, [bool,bool,bool]>, dot-safe keys + normalization
-  PlayerCampaignStageProgress: {
-    type: Map,
-    of: {
-      type: [Boolean],
-      validate: v => Array.isArray(v) && v.length === 3
-    },
-    default: {},
-    set: encodeStageProgressObj,
-    get: decodeStageProgressObj
-  },
-
-  PlayerCampaignRewardProgress: { type: Map, of: Schema.Types.Mixed, default: {} },
-
-  PlayerBoosters: { type: Map, of: Number, default: {} },
-
-  PlayerSelectingBooster: { type: [Number], default: [] },
-
-  // Daily quests keep "type" as a data field via sub-schema typeKey
-  PlayerDailyQuestData: { type: [DailyQuestSchema], default: [] },
-
-  PlayerAchievementData: { type: Map, of: Schema.Types.Mixed, default: {} },
-  PlayerTutorialData: {
-    Character: { type: Boolean, default: false },
-    Booster:   { type: Boolean, default: false },
-    ActionInGame: { type: Boolean, default: false }
-  }
-}, {
-  timestamps: true,
-  minimize: false,         // keep empty objects
-  versionKey: false,
-  toJSON:   { getters: true },  // decode getters in API responses
-  toObject: { getters: true }
-});
-
-// Safe export for hot reloads
-module.exports = mongoose.models.WarzonePlayerProfile
-  || mongoose.model('WarzonePlayerProfile', PlayerProfileSchema);
+};
