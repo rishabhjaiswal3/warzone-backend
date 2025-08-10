@@ -332,16 +332,13 @@ const PlayerProfileSchema = new Schema({
   },
 
   // Actual stage progress (dot-safe keys + fixed-size boolean arrays)
-  PlayerCampaignStageProgress: {
-    type: Map,
-    of: {
-      type: [Boolean],
-      validate: v => Array.isArray(v) && v.length === 3
-    },
-    default: {},
-    set: encodeStageProgressObj,  // accepts Map or plain object
-    get: decodeStageProgressObj
-  },
+  // Actual stage progress (dot-safe keys + fixed-size boolean arrays)
+PlayerCampaignStageProgress: {
+  type: Schema.Types.Mixed,
+  default: {},
+  set: encodeStageProgressObj,  // accepts plain object or Map; encodes dots + normalizes arrays
+  get: decodeStageProgressObj
+},
 
   PlayerCampaignRewardProgress: { type: Map, of: Schema.Types.Mixed, default: {} },
 
