@@ -89,7 +89,11 @@
 
 //New
 
-// --- helpers: encode/decode dotted keys for PlayerCampaignProgress ---
+// models/PlayerProfile.js
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
+
+/* ---------- dot-key helpers for PlayerCampaignProgress ---------- */
 const DOT_ENC = '__dot__';
 
 function encodeCampaignProgressObj(input) {
@@ -105,35 +109,6 @@ function decodeCampaignProgressObj(obj) {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {};
   const out = {};
   for (const [k, v] of Object.entries(obj)) {
-    out[String(k).replace(new RegExp(DOT_ENC, 'g'), '.')] = v;
-  }
-  return out;
-}
-
-// models/PlayerProfile.js
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
-
-/* ---------- helpers for dot-keys in PlayerCampaignProgress ---------- */
-const DOT_ENC = '__dot__';
-
-function encodeCampaignProgress(input) {
-  // Accept Map or plain object; return Map with encoded keys
-  const m = new Map();
-  if (!input) return m;
-  const entries = input instanceof Map ? input.entries() : Object.entries(input);
-  for (const [k, v] of entries) {
-    m.set(String(k).replace(/\./g, DOT_ENC), v);
-  }
-  return m;
-}
-
-function decodeCampaignProgress(mapOrObj) {
-  // Accept Map or plain object; return plain object with decoded keys
-  const out = {};
-  if (!mapOrObj) return out;
-  const entries = mapOrObj instanceof Map ? mapOrObj.entries() : Object.entries(mapOrObj);
-  for (const [k, v] of entries) {
     out[String(k).replace(new RegExp(DOT_ENC, 'g'), '.')] = v;
   }
   return out;
@@ -195,21 +170,13 @@ const PlayerProfileSchema = new Schema({
   PlayerGrenades:    { type: Map, of: GrenadeSchema, default: {} },
   PlayerMeleeWeapons:{ type: Map, of: MeleeSchema,   default: {} },
 
-  // Campaign progress with dot-key encoding/decoding (no client change)
-  // PlayerCampaignProgress: {
-  //   type: Map,
-  //   of: [Boolean],
-  //   default: {},
-  //   set: encodeCampaignProgress,
-  //   get: decodeCampaignProgress
-  // },
-
+  // Campaign progress: accept payload with dotted keys, store encoded, return decoded
   PlayerCampaignProgress: {
-  type: Schema.Types.Mixed,
-  default: {},
-  set: encodeCampaignProgressObj,
-  get: decodeCampaignProgressObj
-},
+    type: Schema.Types.Mixed,
+    default: {},
+    set: encodeCampaignProgressObj,
+    get: decodeCampaignProgressObj
+  },
 
   PlayerCampaignStageProgress:  { type: Map, of: [Boolean],           default: {} },
   PlayerCampaignRewardProgress: { type: Map, of: Schema.Types.Mixed,  default: {} },
@@ -235,5 +202,7 @@ const PlayerProfileSchema = new Schema({
   toObject: { getters: true }
 });
 
-module.exports = mongoose.model('WarzonePlayerProfile', PlayerProfileSchema);
+// Safe export to avoid OverwriteModelError during reloads
+module.exports = mongoose.models.WarzonePlayerProfile
+  || mongoose.model('WarzonePlayerProfile', PlayerProfileSchema);
 
