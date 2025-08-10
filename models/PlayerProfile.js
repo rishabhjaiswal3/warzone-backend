@@ -209,18 +209,39 @@ const { Schema } = mongoose;
 /* ---------------- dot-key helpers (for keys like "1.1") ---------------- */
 const DOT_ENC = '__dot__';
 
+// Convert Map or plain object -> clean plain object, ignoring Mongoose internals
+function toPlainObject(input) {
+  if (!input) return {};
+  // Mongoose Map or native Map
+  if (input instanceof Map) {
+    const out = {};
+    for (const [k, v] of input.entries()) out[String(k)] = v;
+    return out;
+  }
+  // Plain object
+  if (typeof input === 'object' && !Array.isArray(input)) {
+    const out = {};
+    for (const [k, v] of Object.entries(input)) {
+      if (k.startsWith('$__')) continue; // strip mongoose internals
+      out[k] = v;
+    }
+    return out;
+  }
+  return {};
+}
+
 function encodeObjKeys(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+  const obj = toPlainObject(input);
   const out = {};
-  for (const [k, v] of Object.entries(input)) {
+  for (const [k, v] of Object.entries(obj)) {
     out[String(k).replace(/\./g, DOT_ENC)] = v;
   }
   return out;
 }
 function decodeObjKeys(obj) {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {};
+  const plain = toPlainObject(obj);
   const out = {};
-  for (const [k, v] of Object.entries(obj)) {
+  for (const [k, v] of Object.entries(plain)) {
     out[String(k).replace(new RegExp(DOT_ENC, 'g'), '.')] = v;
   }
   return out;
@@ -233,18 +254,17 @@ function decodeCampaignProgressObj(obj)   { return decodeObjKeys(obj); }
 /* ---- StageProgress (Map<string, [bool,bool,bool]>) ---- */
 function normalizeStageArray(val) {
   if (!Array.isArray(val)) return [false, false, false];
-  // exactly 3 booleans: [easy, normal, crazy]
   return [Boolean(val[0]), Boolean(val[1]), Boolean(val[2])];
 }
 function encodeStageProgressObj(input) {
-  const encoded = encodeObjKeys(input);
+  const encoded = encodeObjKeys(input);     // dot-safe + plainified
   for (const k of Object.keys(encoded)) {
     encoded[k] = normalizeStageArray(encoded[k]);
   }
   return encoded;
 }
 function decodeStageProgressObj(obj) {
-  const decoded = decodeObjKeys(obj);
+  const decoded = decodeObjKeys(obj);       // restore dots + plainified
   for (const k of Object.keys(decoded)) {
     decoded[k] = normalizeStageArray(decoded[k]);
   }
@@ -319,7 +339,7 @@ const PlayerProfileSchema = new Schema({
       validate: v => Array.isArray(v) && v.length === 3
     },
     default: {},
-    set: encodeStageProgressObj,
+    set: encodeStageProgressObj,  // accepts Map or plain object
     get: decodeStageProgressObj
   },
 
@@ -343,7 +363,7 @@ const PlayerProfileSchema = new Schema({
   timestamps: true,
   minimize: false,                 // keep empty {}
   versionKey: false,
-  toJSON:   { getters: true },     // make sure decode getters run in API responses
+  toJSON:   { getters: true },     // decode getters in API responses
   toObject: { getters: true }
 });
 
