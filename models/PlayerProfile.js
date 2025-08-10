@@ -89,6 +89,27 @@
 
 //New
 
+// --- helpers: encode/decode dotted keys for PlayerCampaignProgress ---
+const DOT_ENC = '__dot__';
+
+function encodeCampaignProgressObj(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(input)) {
+    out[String(k).replace(/\./g, DOT_ENC)] = v;
+  }
+  return out;
+}
+
+function decodeCampaignProgressObj(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    out[String(k).replace(new RegExp(DOT_ENC, 'g'), '.')] = v;
+  }
+  return out;
+}
+
 // models/PlayerProfile.js
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
