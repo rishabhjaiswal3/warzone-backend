@@ -175,13 +175,20 @@ const PlayerProfileSchema = new Schema({
   PlayerMeleeWeapons:{ type: Map, of: MeleeSchema,   default: {} },
 
   // Campaign progress with dot-key encoding/decoding (no client change)
+  // PlayerCampaignProgress: {
+  //   type: Map,
+  //   of: [Boolean],
+  //   default: {},
+  //   set: encodeCampaignProgress,
+  //   get: decodeCampaignProgress
+  // },
+
   PlayerCampaignProgress: {
-    type: Map,
-    of: [Boolean],
-    default: {},
-    set: encodeCampaignProgress,
-    get: decodeCampaignProgress
-  },
+  type: Schema.Types.Mixed,
+  default: {},
+  set: encodeCampaignProgressObj,
+  get: decodeCampaignProgressObj
+},
 
   PlayerCampaignStageProgress:  { type: Map, of: [Boolean],           default: {} },
   PlayerCampaignRewardProgress: { type: Map, of: Schema.Types.Mixed,  default: {} },
