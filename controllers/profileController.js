@@ -906,7 +906,7 @@ exports.getLeaderboard = async (req, res) => {
   try {
     // Avoid .lean() so schema getters (decode) run automatically
     const leaderboard = await PlayerProfile.find()
-      .sort({ 'PlayerProfile.exp': -1 })
+      .sort({ 'PlayerResources.coin': -1 }) // Coin se sort kr rha abb kyuki exp 0 rahegi jab tk player award nahi win krleta
       .limit(100);
 
     const walletAddresses = leaderboard.map(p => p.walletAddress);
