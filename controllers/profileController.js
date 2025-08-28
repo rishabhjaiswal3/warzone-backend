@@ -886,6 +886,30 @@ exports.saveProfile = async (req, res) => {
   }
 };
 
+//Daily Quest
+exports.getDailyQuests = async (req, res) => {
+  try {
+    const { walletAddress } = req.query;
+    if (!walletAddress) {
+      return res.status(400).json({ success: false, error: "walletAddress is required" });
+    }
+
+    // fetch profile with normalization
+    const profile = await getWalletProfile(walletAddress);
+    if (!profile) {
+      return res.status(404).json({ success: false, error: "Profile not found" });
+    }
+
+    return res.json({
+      wallet: walletAddress,
+      PlayerDailyQuestData: profile.PlayerDailyQuestData || []
+    });
+  } catch (error) {
+    console.error("Error in getDailyQuests:", error);
+    return res.status(500).json({ success: false, error: "Server error" });
+  }
+};
+
 exports.getProfile = async (req, res) => {
   try {
     const walletAddress = req.query.walletAddress;
