@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getProfile, saveProfile,getLeaderboard,checkNameExistance, saveName, getName,login } = require('../controllers/profileController');
+const { getProfile, saveProfile,getLeaderboard,checkNameExistance, getDailyQuests, saveName, getName,login } = require('../controllers/profileController');
 const verifyUser = require('../routes/middleware/verifyUser');
 router.get('/', getProfile);
 router.post('/', saveProfile);
+router.get('/dailyQuests', getDailyQuests);
 router.get('/leaderboard',getLeaderboard);
 router.post('/name', checkNameExistance);
 router.post('/saveName',verifyUser, saveName);
