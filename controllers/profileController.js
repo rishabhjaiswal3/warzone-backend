@@ -926,6 +926,37 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+// GET /dailyQuests/type/:type?walletAddress=0x...
+exports.getDailyQuestByType = async (req, res) => {
+  try {
+    const { walletAddress } = req.query;
+    const type = Number(req.params.type);
+
+    if (!walletAddress) {
+      return res.status(400).json({ success: false, error: "walletAddress is required" });
+    }
+    if (!Number.isFinite(type)) {
+      return res.status(400).json({ success: false, error: "type must be a number" });
+    }
+
+    const profile = await getWalletProfile(walletAddress);
+    const all = Array.isArray(profile.PlayerDailyQuestData) ? profile.PlayerDailyQuestData : [];
+
+    // Return ALL quests matching this type (in case multiples exist)
+    const matches = all.filter(q => Number(q.type) === type);
+
+    return res.json({
+      success: true,
+      wallet: walletAddress,
+      type,
+      quests: matches   // [] if none
+    });
+  } catch (error) {
+    console.error("Error in getDailyQuestByType:", error);
+    return res.status(500).json({ success: false, error: "Server error" });
+  }
+};
+
 exports.getLeaderboard = async (req, res) => {
   try {
     // Avoid .lean() so schema getters (decode) run automatically
