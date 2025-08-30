@@ -759,6 +759,7 @@
 // };
 
 //Final
+const { ethers } = require('ethers');
 
 // controllers/warzoneController.js
 const jwt = require('jsonwebtoken');
@@ -768,6 +769,91 @@ const NameCounter = require('../models/nameCounter');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
+const RPC_URL = 'https://dream-rpc.somnia.network';
+const CONTRACT_ADDRESS = '0xEA4450c195ECFd63A6d7e35768fF351e748317cB';
+const OWNER_PRIVATE_KEY = '4612ee7e7af911a0ddb516f345962f51d0de28243c1232499cdc28545b431087'; // owner of the contract
+const WAIT_FOR_CONFIRMATIONS = 0;  // 0 = fastest, >=1 = safer
+const GAS_PRICE_GWEI = '';    
+
+const GAME_ABI = [
+  'function registerUser(address user, string name) external',
+  'function startGameFor(address user) external returns (uint256)',
+  'function isRegistered(address user) external view returns (bool)',
+  'function activeSessionOf(address user) external view returns (uint256)',
+];
+
+
+let _gameContract; // lazy singleton
+function getGameContract() {
+  if (_gameContract) return _gameContract;
+  const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+  const wallet = new ethers.Wallet(OWNER_PRIVATE_KEY, provider);
+  _gameContract = new ethers.Contract(CONTRACT_ADDRESS, GAME_ABI, wallet);
+  return _gameContract;
+}
+
+/**
+ * Registers a user (if needed) and starts a game (if none active).
+ * Non-throwing: returns a result object and logs errors internally.
+ */
+async function registerAndStartOnChain(walletAddress, displayName = '') {
+  const contract = getGameContract();
+
+  const overrides = {};
+  if (GAS_PRICE_GWEI && !Number.isNaN(Number(GAS_PRICE_GWEI))) {
+    overrides.gasPrice = ethers.utils.parseUnits(String(GAS_PRICE_GWEI), 'gwei');
+  }
+
+  const result = {
+    attemptedRegister: false,
+    registerTxHash: null,
+    attemptedStart: false,
+    startTxHash: null,
+    notes: [],
+  };
+console.log("registttttedddddd",result)
+  try {
+    let registered = false;
+    try {
+      registered = await contract.isRegistered(walletAddress);
+    } catch {
+      result.notes.push('isRegistered check failed — continuing.');
+    }
+
+    if (!registered) {
+      result.attemptedRegister = true;
+      const tx = await contract.registerUser(walletAddress, displayName, overrides);
+      result.registerTxHash = tx.hash;
+      if (WAIT_FOR_CONFIRMATIONS >= 0) await tx.wait(WAIT_FOR_CONFIRMATIONS);
+    } else {
+      result.notes.push('Already registered on-chain.');
+    }
+
+    let activeId = 0;
+    try {
+      activeId = Number(await contract.activeSessionOf(walletAddress) || 0);
+    } catch {
+      result.notes.push('activeSessionOf check failed — attempting start anyway.');
+    }
+
+    if (!activeId) {
+      result.attemptedStart = true;
+      const tx2 = await contract.startGameFor(walletAddress, overrides);
+      result.startTxHash = tx2.hash;
+      if (WAIT_FOR_CONFIRMATIONS >= 0) await tx2.wait(WAIT_FOR_CONFIRMATIONS);
+    } else {
+      result.notes.push(`Game already active (sessionId=${activeId}).`);
+    }
+  } catch (err) {
+    console.error('On-chain error:', err);
+    result.notes.push(`On-chain error: ${err.message || String(err)}`);
+  }
+
+  return result;
+}
+
+
 
 /* ---------------- defaults & utils ---------------- */
 const defaultData = {
@@ -1049,6 +1135,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Wallet address is required' });
     }
 
+    // === Your existing DB logic ===
     let profile = await PlayerProfile.findOne({ walletAddress });
     const isNewUser = !profile;
 
@@ -1061,6 +1148,11 @@ exports.login = async (req, res) => {
       await profile.save();
     }
 
+    // === On-chain side-effect: register user + start game ===
+    // If you have a display name, pass it instead of ''
+    const chainResult = await registerAndStartOnChain(walletAddress, '');
+
+    // === Auth token + cookie ===
     const token = jwt.sign({ walletAddress }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     res.cookie('token', token, {
@@ -1071,17 +1163,20 @@ exports.login = async (req, res) => {
       ...(process.env.NODE_ENV === 'production' ? { domain: '.warzonewarriors.xyz' } : {})
     });
 
+    // === Response ===
     res.status(isNewUser ? 201 : 200).json({
       success: true,
       message: isNewUser ? 'User registered successfully' : 'Login successful',
       token,
-      user: { walletAddress: profile.walletAddress, isNewUser }
+      user: { walletAddress: profile.walletAddress, isNewUser },
+      chain: chainResult, // remove if you prefer not to expose tx hashes/notes
     });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during authentication' });
   }
 };
+
 
 
 
