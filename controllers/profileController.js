@@ -1032,7 +1032,7 @@ exports.getDailyQuestByType = async (req, res) => {
     const matches = all.filter(q => Number(q.type) === type);
 
     let completed = false;
-    let reware = '';
+    let reward = '';
     if(type == 0) {
       if(matches.progress > 2) {
         completed = true;
