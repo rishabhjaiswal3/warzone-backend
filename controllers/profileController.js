@@ -1032,41 +1032,49 @@ exports.getDailyQuestByType = async (req, res) => {
     const matches = all.filter(q => Number(q.type) === type);
 
     let completed = false;
-
-    if(type == 0){
+    let reware = '';
+    if(type == 0) {
       if(matches.progress > 2) {
         completed = true;
+	reward = 'Stage Runner'
       }
     }
     else if( type == 1 ) {
       if(matches.progress >=500 ) {
         completed = true;
+	reward = 'Mass Annihilation'
       }
     }
     else if(type == 9 ) {
       if(matches.progress >= 20) {
         completed = true;
+        reward = 'Tank Buster'
       }
     }
-    else if(type == 10){
+    else if(type == 10) {
       if(matches.progress > 5) {
         completed = true;
+        reward = 'Hardcore Victor'
       }
     }
     else if(type == 11) {
       if(matches.progress >= 3) {
         completed = true;
+        reward = 'Boss Slayer'
       }
     }
 
 
     const newResponse = {
       success: true,
+      status: 200,
       wallet: walletAddress,
-      completed:completed,
-      score: matches?.progress,
-      isClaimed: matches.isClaimed
+      completed:completed ?? false,
+      score: matches?.progress ?? 0,
+      isClaimed: matches.isClaimed ?? false,
+      reward: reward
     }
+
     return res.json({...newResponse})
     // return res.json({
     //   success: true,
