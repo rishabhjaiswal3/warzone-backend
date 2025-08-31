@@ -1036,33 +1036,33 @@ exports.getDailyQuestByType = async (req, res) => {
     let completed = false;
     let reward = '';
 
-    if(type == 0 || type == '0') {
+    if((type == 0 || type == '0') ) {
       reward = 'Stage Runner'
-      if(matches[0].progress > 2) {
+      if(matches.size() > 0  && matches[0].progress > 2 ) {
         completed = true;
       }
     }
     else if( type == 1 || type == '1') {
       reward = 'Mass Annihilation'
-      if(matches[0].progress >=500 ) {
+      if( matches.size() > 0 &&  matches[0].progress >=500 ) {
         completed = true;
       }
     }
     else if(type == 9 || type == '9') {
       reward = 'Tank Buster'
-      if(matches[0].progress >= 20) {
+      if(matches.size() > 0 && matches[0].progress >= 20) {
         completed = true;
       }
     }
     else if(type == 10 || type == '10') {
       reward = 'Hardcore Victor'
-      if(matches[0].progress > 5) {
+      if(matches.size() > 0 && matches[0].progress > 5) {
         completed = true;
       }
     }
     else if(type == 11 || type == '11') {
       reward = 'Boss Slayer'
-      if(matches[0].progress >= 3) {
+      if(matches.size() > 0 && matches[0].progress >= 3) {
         completed = true;
       }
     }
