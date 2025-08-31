@@ -1033,34 +1033,35 @@ exports.getDailyQuestByType = async (req, res) => {
 
     let completed = false;
     let reward = '';
-    if(type == 0) {
+
+    if(type == 0 || type == '0') {
+      reward = 'Stage Runner'
       if(matches.progress > 2) {
         completed = true;
-	reward = 'Stage Runner'
       }
     }
-    else if( type == 1 ) {
+    else if( type == 1 || type == '1') {
+      reward = 'Mass Annihilation'
       if(matches.progress >=500 ) {
         completed = true;
-	reward = 'Mass Annihilation'
       }
     }
-    else if(type == 9 ) {
+    else if(type == 9 || type == '9') {
+      reward = 'Tank Buster'
       if(matches.progress >= 20) {
         completed = true;
-        reward = 'Tank Buster'
       }
     }
-    else if(type == 10) {
+    else if(type == 10 || type == '10') {
+      reward = 'Hardcore Victor'
       if(matches.progress > 5) {
         completed = true;
-        reward = 'Hardcore Victor'
       }
     }
-    else if(type == 11) {
+    else if(type == 11 || type == '11') {
+      reward = 'Boss Slayer'
       if(matches.progress >= 3) {
         completed = true;
-        reward = 'Boss Slayer'
       }
     }
 
@@ -1076,12 +1077,6 @@ exports.getDailyQuestByType = async (req, res) => {
     }
 
     return res.json({...newResponse})
-    // return res.json({
-    //   success: true,
-    //   wallet: walletAddress,
-    //   type,
-    //   quests: matches   // [] if none
-    // });
   } catch (error) {
     console.error("Error in getDailyQuestByType:", error);
     return res.status(500).json({ success: false, error: "Server error" });
