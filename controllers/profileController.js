@@ -1029,38 +1029,40 @@ exports.getDailyQuestByType = async (req, res) => {
     const all = Array.isArray(profile.PlayerDailyQuestData) ? profile.PlayerDailyQuestData : [];
 
     // Return ALL quests matching this type (in case multiples exist)
+
     const matches = all.filter(q => Number(q.type) === type);
+    console.log("My matches are ",matches);
 
     let completed = false;
     let reward = '';
 
     if(type == 0 || type == '0') {
       reward = 'Stage Runner'
-      if(matches.progress > 2) {
+      if(matches[0].progress > 2) {
         completed = true;
       }
     }
     else if( type == 1 || type == '1') {
       reward = 'Mass Annihilation'
-      if(matches.progress >=500 ) {
+      if(matches[0].progress >=500 ) {
         completed = true;
       }
     }
     else if(type == 9 || type == '9') {
       reward = 'Tank Buster'
-      if(matches.progress >= 20) {
+      if(matches[0].progress >= 20) {
         completed = true;
       }
     }
     else if(type == 10 || type == '10') {
       reward = 'Hardcore Victor'
-      if(matches.progress > 5) {
+      if(matches[0].progress > 5) {
         completed = true;
       }
     }
     else if(type == 11 || type == '11') {
       reward = 'Boss Slayer'
-      if(matches.progress >= 3) {
+      if(matches[0].progress >= 3) {
         completed = true;
       }
     }
@@ -1071,8 +1073,8 @@ exports.getDailyQuestByType = async (req, res) => {
       status: 200,
       wallet: walletAddress,
       completed:completed ?? false,
-      score: matches?.progress ?? 0,
-      isClaimed: matches.isClaimed ?? false,
+      score: matches[0]?.progress ?? 0,
+      isClaimed: matches[0]?.isClaimed ?? false,
       reward: reward
     }
 
