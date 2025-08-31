@@ -1031,12 +1031,49 @@ exports.getDailyQuestByType = async (req, res) => {
     // Return ALL quests matching this type (in case multiples exist)
     const matches = all.filter(q => Number(q.type) === type);
 
-    return res.json({
+    let completed = false;
+
+    if(type == 0){
+      if(matches.progress > 2) {
+        completed = true;
+      }
+    }
+    else if( type == 1 ) {
+      if(matches.progress >=500 ) {
+        completed = true;
+      }
+    }
+    else if(type == 9 ) {
+      if(matches.progress >= 20) {
+        completed = true;
+      }
+    }
+    else if(type == 10){
+      if(matches.progress > 5) {
+        completed = true;
+      }
+    }
+    else if(type == 11) {
+      if(matches.progress >= 3) {
+        completed = true;
+      }
+    }
+
+
+    const newResponse = {
       success: true,
       wallet: walletAddress,
-      type,
-      quests: matches   // [] if none
-    });
+      completed:completed,
+      score: matches?.progress,
+      isClaimed: matches.isClaimed
+    }
+    return res.json({...newResponse})
+    // return res.json({
+    //   success: true,
+    //   wallet: walletAddress,
+    //   type,
+    //   quests: matches   // [] if none
+    // });
   } catch (error) {
     console.error("Error in getDailyQuestByType:", error);
     return res.status(500).json({ success: false, error: "Server error" });
@@ -1176,7 +1213,3 @@ exports.login = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error during authentication' });
   }
 };
-
-
-
-
