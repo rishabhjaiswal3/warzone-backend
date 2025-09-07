@@ -1,5 +1,4 @@
 // controllers/iapController.js
-const ApiError = require("../utils/ApiError"); // if you don’t have this, replace with simple res.status(...)
 const PlayerProfile = require("../models/PlayerProfile");
 
 const COIN_PACKS = new Map([["100",100],["500",500],["1000",1000],["2000",2000]]);
@@ -18,11 +17,10 @@ const GUN_IDS    = new Map([
 // Body: { category: "Coins"|"Gems"|"Guns", product: "100"|"500"|...|"ScarH"|... }
 exports.purchase = async (req, res) => {
   try {
-    // Get wallet from your existing auth middleware
-    const wallet = (req.user?.wallet || req.wallet || "").toLowerCase(); // verifyUser typically sets req.user
+    // Get wallet from auth middleware (verifyUser sets req.walletAddress)
+    const wallet = (req.walletAddress || req.user?.wallet || req.wallet || "").toLowerCase();
     if (!wallet) {
-      const e = new ApiError?.(401, "Unauthorized") || { statusCode: 401, message: "Unauthorized" };
-      return res.status(e.statusCode).json({ ok: false, message: e.message });
+      return res.status(401).json({ ok: false, message: "Unauthorized" });
     }
 
     const { category, product } = req.body || {};

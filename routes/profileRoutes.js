@@ -3,7 +3,7 @@ const router = express.Router();
 const { getProfile, saveProfile, getLeaderboard, checkNameExistance, getDailyQuests, getDailyQuestByType, saveName, getName, login } = require('../controllers/profileController');
 const verifyUser = require('../routes/middleware/verifyUser');
 
-const iapController = require('../controllers/iapController');
+const iapController = require('../controllers/iap.controller');
 
 router.get('/', getProfile);
 router.post('/', saveProfile);
