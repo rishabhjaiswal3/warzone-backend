@@ -28,7 +28,9 @@ exports.purchase = async (req, res) => {
       return res.status(400).json({ ok: false, message: "category and product are required" });
     }
 
-    const player = await PlayerProfile.findOne({ walletAddress: wallet });
+    const player = await PlayerProfile.findOne({ 
+      walletAddress: { $regex: new RegExp(`^${wallet}$`, 'i') } 
+  });
     if (!player) return res.status(404).json({ ok: false, message: "Player not found" });
 
     let message = "";
