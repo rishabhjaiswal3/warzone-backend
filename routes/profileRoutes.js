@@ -4,6 +4,8 @@ const { getProfile, saveProfile, getLeaderboard, checkNameExistance, getDailyQue
 const verifyUser = require('../routes/middleware/verifyUser');
 
 const iapController = require('../controllers/iap.controller');
+// In-memory pricing exposure for store UI (Coins/Gems only)
+
 
 router.get('/', getProfile);
 router.post('/', saveProfile);
@@ -24,5 +26,45 @@ router.get("/health", (req, res) => {
 });
 
 router.post('/iap/purchase', verifyUser, iapController.purchase);
+// Legacy alias for FE compatibility
+router.post('/api/v1/player/iap/purchase', verifyUser, iapController.purchase);
+
+// Optional: expose pricing for Coins/Gems so FE can render store
+router.get('/iap/pricing', (req, res) => {
+  // Keep in sync with controllers/iap.controller.js
+  const currency = 'ETH';
+  const coinPacks = [
+    { product: '100', amount: 100, priceEth: '0.5', price: 0.5, currency },
+    { product: '500', amount: 500, priceEth: '2', price: 2, currency },
+    { product: '1000', amount: 1000, priceEth: '4', price: 4, currency },
+    { product: '2000', amount: 2000, priceEth: '7.5', price: 7.5, currency },
+  ];
+  const gemPacks = [
+    { product: '100', amount: 100, priceEth: '0.5', price: 0.5, currency },
+    { product: '300', amount: 300, priceEth: '1.5', price: 1.5, currency },
+    { product: '500', amount: 500, priceEth: '2.5', price: 2.5, currency },
+    { product: '1000', amount: 1000, priceEth: '5', price: 5, currency },
+  ];
+
+  res.json({ ok: true, data: { coins: coinPacks, gems: gemPacks, currency } });
+});
+// Legacy alias for FE compatibility
+router.get('/api/v1/player/iap/pricing', (req, res) => {
+  const currency = 'STT';
+  const coinPacks = [
+    { product: '100', amount: 100, priceEth: '0.5', price: 0.5, currency },
+    { product: '500', amount: 500, priceEth: '2', price: 2, currency },
+    { product: '1000', amount: 1000, priceEth: '4', price: 4, currency },
+    { product: '2000', amount: 2000, priceEth: '7.5', price: 7.5, currency },
+  ];
+  const gemPacks = [
+    { product: '100', amount: 100, priceEth: '0.5', price: 0.5, currency },
+    { product: '300', amount: 300, priceEth: '1.5', price: 1.5, currency },
+    { product: '500', amount: 500, priceEth: '2.5', price: 2.5, currency },
+    { product: '1000', amount: 1000, priceEth: '5', price: 5, currency },
+  ];
+
+  res.json({ ok: true, data: { coins: coinPacks, gems: gemPacks, currency } });
+});
 
 module.exports = router;

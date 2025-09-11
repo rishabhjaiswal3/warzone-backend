@@ -2,7 +2,12 @@
 const PlayerProfile = require("../models/PlayerProfile");
 
 const COIN_PACKS = new Map([["100",100],["500",500],["1000",1000],["2000",2000]]);
+// ETH pricing for coin packs
+const COIN_PRICES = new Map([["100","0.5"],["500","2"],["1000","4"],["2000","7.5"]]);
+
 const GEM_PACKS  = new Map([["100",100],["300",300],["500",500],["1000",1000]]);
+// ETH pricing for gem packs
+const GEM_PRICES = new Map([["100","0.5"],["300","1.5"],["500","2.5"],["1000","5"]]);
 // Per your spec (Tesla Mini shares id=7 with Sniper Rifle)
 const GUN_IDS    = new Map([
   ["Shotgun",4],
@@ -35,21 +40,28 @@ exports.purchase = async (req, res) => {
 
     let message = "";
     let changed = false;
+    let purchase = null; // attach purchase meta for FE
 
     if (category === "Coins") {
       const amt = COIN_PACKS.get(String(product));
       if (!amt) return res.status(400).json({ ok: false, message: "Invalid coin pack" });
+      const priceEth = COIN_PRICES.get(String(product)) || null;
+      const price = priceEth ? parseFloat(priceEth) : null;
       player.PlayerResources = player.PlayerResources || { coin: 0, gem: 0, stamina: 0, medal: 0, tournamentTicket: 0 };
       player.PlayerResources.coin = (player.PlayerResources.coin ?? 0) + amt;
       message = `Added +${amt} coins`;
       changed = true;
+      purchase = { category: "Coins", product: String(product), amount: amt, priceEth, price };
     } else if (category === "Gems") {
       const amt = GEM_PACKS.get(String(product));
       if (!amt) return res.status(400).json({ ok: false, message: "Invalid gem pack" });
+      const priceEth = GEM_PRICES.get(String(product)) || null;
+      const price = priceEth ? parseFloat(priceEth) : null;
       player.PlayerResources = player.PlayerResources || { coin: 0, gem: 0, stamina: 0, medal: 0, tournamentTicket: 0 };
       player.PlayerResources.gem = (player.PlayerResources.gem ?? 0) + amt;
       message = `Added +${amt} gems`;
       changed = true;
+      purchase = { category: "Gems", product: String(product), amount: amt, priceEth, price };
     } else if (category === "Guns") {
       const gunId = GUN_IDS.get(String(product));
       if (gunId === undefined) return res.status(400).json({ ok: false, message: "Invalid gun product" });
@@ -80,7 +92,8 @@ exports.purchase = async (req, res) => {
       data: {
         walletAddress: player.walletAddress,
         PlayerResources: player.PlayerResources,
-        PlayerGuns: player.PlayerGuns || {}
+        PlayerGuns: player.PlayerGuns || {},
+        ...(purchase ? { purchase, priceEth: purchase.priceEth, price: purchase.price, currency: 'ETH' } : {})
       }
     });
   } catch (err) {
