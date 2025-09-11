@@ -9,11 +9,12 @@ const NameCounter = require('../models/nameCounter');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-const RPC_URL = 'https://dream-rpc.somnia.network';
-const CONTRACT_ADDRESS = '0xEA4450c195ECFd63A6d7e35768fF351e748317cB';
-const OWNER_PRIVATE_KEY = '4612ee7e7af911a0ddb516f345962f51d0de28243c1232499cdc28545b431087'; // owner of the contract
-const WAIT_FOR_CONFIRMATIONS = 0;  // 0 = fastest, >=1 = safer
-const GAS_PRICE_GWEI = '';    
+// Somnia mainnet / chain settings (env-driven)
+const RPC_URL = process.env.SOMNIA_RPC_URL || 'https://dream-rpc.somnia.network';
+const CONTRACT_ADDRESS = process.env.GAME_CONTRACT_ADDRESS || '0xEA4450c195ECFd63A6d7e35768fF351e748317cB';
+const OWNER_PRIVATE_KEY = process.env.GAME_OWNER_PRIVATE_KEY || '';
+const WAIT_FOR_CONFIRMATIONS = Number(process.env.WAIT_FOR_CONFIRMATIONS ?? '1');  // 1+ safer on mainnet
+const GAS_PRICE_GWEI = process.env.GAS_PRICE_GWEI || '';
 
 const GAME_ABI = [
   'function registerUser(address user, string name) external',
@@ -26,6 +27,11 @@ const GAME_ABI = [
 let _gameContract; // lazy singleton
 function getGameContract() {
   if (_gameContract) return _gameContract;
+
+  if (!RPC_URL) throw new Error('Missing SOMNIA_RPC_URL');
+  if (!CONTRACT_ADDRESS) throw new Error('Missing GAME_CONTRACT_ADDRESS');
+  if (!OWNER_PRIVATE_KEY) throw new Error('Missing GAME_OWNER_PRIVATE_KEY');
+
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   const wallet = new ethers.Wallet(OWNER_PRIVATE_KEY, provider);
   _gameContract = new ethers.Contract(CONTRACT_ADDRESS, GAME_ABI, wallet);
@@ -44,8 +50,6 @@ function gasOverrides() {
  * Non-throwing: returns a result object and logs errors internally.
  */
 async function registerAndStartOnChain(walletAddress, displayName = '') {
-  const contract = getGameContract();
-
   const overrides = gasOverrides();
 
   const result = {
@@ -57,6 +61,7 @@ async function registerAndStartOnChain(walletAddress, displayName = '') {
   };
   console.log("registttttedddddd", result);
   try {
+    const contract = getGameContract();
     let registered = false;
     try {
       registered = await contract.isRegistered(walletAddress);
@@ -101,7 +106,6 @@ async function registerAndStartOnChain(walletAddress, displayName = '') {
  * Non-throwing: returns a summary and logs errors internally.
  */
 async function endGameIfActive(walletAddress) {
-  const contract = getGameContract();
   const overrides = gasOverrides();
 
   const result = {
@@ -111,6 +115,7 @@ async function endGameIfActive(walletAddress) {
   };
 
   try {
+    const contract = getGameContract();
     let activeId = 0;
     try {
       activeId = Number(await contract.activeSessionOf(walletAddress) || 0);
