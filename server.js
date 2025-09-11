@@ -2,9 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const profileRoutes = require('./routes/profileRoutes');
-
+// Ensure env is loaded before importing modules that read it
 dotenv.config();
+const profileRoutes = require('./routes/profileRoutes');
 const app = express();
 
 const allowedOrigins = [

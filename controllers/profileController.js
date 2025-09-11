@@ -9,12 +9,23 @@ const NameCounter = require('../models/nameCounter');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-// Somnia mainnet / chain settings (env-driven)
-const RPC_URL = process.env.SOMNIA_RPC_URL || 'https://dream-rpc.somnia.network';
-const CONTRACT_ADDRESS = process.env.GAME_CONTRACT_ADDRESS || '0xEA4450c195ECFd63A6d7e35768fF351e748317cB';
-const OWNER_PRIVATE_KEY = process.env.GAME_OWNER_PRIVATE_KEY || '';
-const WAIT_FOR_CONFIRMATIONS = Number(process.env.WAIT_FOR_CONFIRMATIONS ?? '1');  // 1+ safer on mainnet
-const GAS_PRICE_GWEI = process.env.GAS_PRICE_GWEI || '';
+// Somnia mainnet / chain settings (env-driven, read lazily)
+function readEnv(name, fallback) {
+  const v = process.env[name];
+  if (v == null) return fallback;
+  const trimmed = String(v).trim();
+  return trimmed === '' ? fallback : trimmed;
+}
+
+function getChainConfig() {
+  const rpcUrl = readEnv('SOMNIA_RPC_URL', 'https://api.infra.mainnet.somnia.network');
+  const contractAddress = readEnv('GAME_CONTRACT_ADDRESS', '0xEA4450c195ECFd63A6d7e35768fF351e748317cB');
+  // Accept alternate env names if provided
+  const ownerPkRaw = readEnv('GAME_OWNER_PRIVATE_KEY', readEnv('OWNER_PRIVATE_KEY', '0x4612ee7e7af911a0ddb516f345962f51d0de28243c1232499cdc28545b431087'));
+  const waitConfirmations = Number(readEnv('WAIT_FOR_CONFIRMATIONS', '1'));
+  const gasPriceGwei = readEnv('GAS_PRICE_GWEI', '');
+  return { rpcUrl, contractAddress, ownerPkRaw, waitConfirmations, gasPriceGwei };
+}
 
 const GAME_ABI = [
   'function registerUser(address user, string name) external',
@@ -28,19 +39,24 @@ let _gameContract; // lazy singleton
 function getGameContract() {
   if (_gameContract) return _gameContract;
 
-  if (!RPC_URL) throw new Error('Missing SOMNIA_RPC_URL');
-  if (!CONTRACT_ADDRESS) throw new Error('Missing GAME_CONTRACT_ADDRESS');
-  if (!OWNER_PRIVATE_KEY) throw new Error('Missing GAME_OWNER_PRIVATE_KEY');
+  const { rpcUrl, contractAddress, ownerPkRaw } = getChainConfig();
+  if (!rpcUrl) throw new Error('Missing SOMNIA_RPC_URL');
+  if (!contractAddress) throw new Error('Missing GAME_CONTRACT_ADDRESS');
+  if (!ownerPkRaw) throw new Error('Missing GAME_OWNER_PRIVATE_KEY');
 
-  const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-  const wallet = new ethers.Wallet(OWNER_PRIVATE_KEY, provider);
-  _gameContract = new ethers.Contract(CONTRACT_ADDRESS, GAME_ABI, wallet);
+  const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+  // Normalize PK to 0x-prefixed hex if necessary
+  const pkTrim = ownerPkRaw.trim();
+  const pk = pkTrim.startsWith('0x') ? pkTrim : `0x${pkTrim}`;
+  const wallet = new ethers.Wallet(pk, provider);
+  _gameContract = new ethers.Contract(contractAddress, GAME_ABI, wallet);
   return _gameContract;
 }
 
 function gasOverrides() {
-  if (GAS_PRICE_GWEI && !Number.isNaN(Number(GAS_PRICE_GWEI))) {
-    return { gasPrice: ethers.utils.parseUnits(String(GAS_PRICE_GWEI), 'gwei') };
+  const { gasPriceGwei } = getChainConfig();
+  if (gasPriceGwei && !Number.isNaN(Number(gasPriceGwei))) {
+    return { gasPrice: ethers.utils.parseUnits(String(gasPriceGwei), 'gwei') };
   }
   return {};
 }
@@ -59,7 +75,6 @@ async function registerAndStartOnChain(walletAddress, displayName = '') {
     startTxHash: null,
     notes: [],
   };
-  console.log("registttttedddddd", result);
   try {
     const contract = getGameContract();
     let registered = false;
@@ -73,7 +88,8 @@ async function registerAndStartOnChain(walletAddress, displayName = '') {
       result.attemptedRegister = true;
       const tx = await contract.registerUser(walletAddress, displayName, overrides);
       result.registerTxHash = tx.hash;
-      if (WAIT_FOR_CONFIRMATIONS >= 0) await tx.wait(WAIT_FOR_CONFIRMATIONS);
+      const { waitConfirmations } = getChainConfig();
+      if (waitConfirmations >= 0) await tx.wait(waitConfirmations);
     } else {
       result.notes.push('Already registered on-chain.');
     }
@@ -89,15 +105,17 @@ async function registerAndStartOnChain(walletAddress, displayName = '') {
       result.attemptedStart = true;
       const tx2 = await contract.startGameFor(walletAddress, overrides);
       result.startTxHash = tx2.hash;
-      if (WAIT_FOR_CONFIRMATIONS >= 0) await tx2.wait(WAIT_FOR_CONFIRMATIONS);
-    } else {
-      result.notes.push(`Game already active (sessionId=${activeId}).`);
-    }
+      const { waitConfirmations: wait2 } = getChainConfig();
+      if (wait2 >= 0) await tx2.wait(wait2);
+  } else {
+    result.notes.push(`Game already active (sessionId=${activeId}).`);
+  }
   } catch (err) {
     console.error('On-chain error:', err);
     result.notes.push(`On-chain error: ${err.message || String(err)}`);
   }
 
+  console.log('registerAndStartOnChain result:', result);
   return result;
 }
 
@@ -132,7 +150,8 @@ async function endGameIfActive(walletAddress) {
     result.attemptedEnd = true;
     const tx = await contract.endGameFor(walletAddress, overrides);
     result.endTxHash = tx.hash;
-    if (WAIT_FOR_CONFIRMATIONS >= 0) await tx.wait(WAIT_FOR_CONFIRMATIONS);
+    const { waitConfirmations } = getChainConfig();
+    if (waitConfirmations >= 0) await tx.wait(waitConfirmations);
   } catch (err) {
     console.error('endGameIfActive error:', err);
     result.notes.push(`On-chain error: ${err.message || String(err)}`);
