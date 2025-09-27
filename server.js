@@ -2,9 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const profileRoutes = require('./routes/profileRoutes');
-
+// Ensure env is loaded before importing modules that read it
 dotenv.config();
+const profileRoutes = require('./routes/profileRoutes');
 const app = express();
 
 const allowedOrigins = [
@@ -81,7 +81,8 @@ app.use('*', (req, res) => {
 // DB connection
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  dbName: process.env.MONGO_DB_NAME || 'new-warzone'
 }).then(() => {
   console.log('MongoDB connected successfully');
 }).catch(err => {
