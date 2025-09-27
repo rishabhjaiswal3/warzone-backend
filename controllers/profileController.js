@@ -1044,7 +1044,7 @@ exports.getDailyQuestByType = async (req, res) => {
     }
     else if( type == 1 || type == '1') {
       reward = 'Mass Annihilation'
-      if( matches.length > 0 &&  matches[0].progress >=500 ) {
+      if( matches.length > 0 &&  matches[0].progress >=200 ) {
         completed = true;
       }
     }
