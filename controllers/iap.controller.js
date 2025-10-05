@@ -84,20 +84,48 @@ exports.purchase = async (req, res) => {
       return res.status(400).json({ ok: false, message: "Unsupported category. Allowed: Coins, Gems, Guns" });
     }
 
-    if (changed) await player.save();
 
-    return res.json({
-      ok: true,
-      message,
-      data: {
-        walletAddress: player.walletAddress,
-        PlayerResources: player.PlayerResources,
-        PlayerGuns: player.PlayerGuns || {},
-        ...(purchase ? { purchase, priceEth: purchase.priceEth, price: purchase.price, currency: 'ETH' } : {})
-      }
-    });
-  } catch (err) {
+    if (changed) {
+  player.markModified('PlayerGuns');
+  player.markModified('PlayerResources');
+  await player.save();
+}
+
+return res.json({
+  ok: true,
+  message,
+  data: {
+    walletAddress: player.walletAddress,
+    PlayerResources: player.PlayerResources,
+    PlayerGuns: player.PlayerGuns || {},
+    ...(purchase ? {
+      purchase,
+      priceEth: purchase.priceEth,
+      price: purchase.price,
+      currency: 'ETH'
+    } : {})
+  }
+});
+    } catch (err) {
     const status = err?.statusCode || 500;
     return res.status(status).json({ ok: false, message: err?.message || "Internal error" });
   }
 };
+
+//     if (changed) await player.save();
+
+//     return res.json({
+//       ok: true,
+//       message,
+//       data: {
+//         walletAddress: player.walletAddress,
+//         PlayerResources: player.PlayerResources,
+//         PlayerGuns: player.PlayerGuns || {},
+//         ...(purchase ? { purchase, priceEth: purchase.priceEth, price: purchase.price, currency: 'ETH' } : {})
+//       }
+//     });
+//   } catch (err) {
+//     const status = err?.statusCode || 500;
+//     return res.status(status).json({ ok: false, message: err?.message || "Internal error" });
+//   }
+// };
