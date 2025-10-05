@@ -399,7 +399,6 @@ exports.getDailyQuestByType = async (req, res) => {
       score: matches[0]?.progress ?? 0,
       isClaimed: matches[0]?.isClaimed ?? false,
       reward: reward,
-      requestId
     }
 
     console.log('[getDailyQuestByType] success', { requestId, walletAddress, type, completed: newResponse.completed, score: newResponse.score });
