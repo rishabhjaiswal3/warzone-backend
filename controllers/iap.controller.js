@@ -77,7 +77,9 @@ exports.purchase = async (req, res) => {
         });
       }
 
-      player.PlayerGuns[String(gunId)] = { id: gunId, level: 1, ammo: 10000, isNew: false };
+      player.PlayerGuns[String(gunId)] = { id: gunId, level: 1, ammo: 100000, isNew: false };
+      player.markModified("PlayerGuns");
+      await player.save();
       message = `Unlocked gun: ${product} (id=${gunId})`;
       changed = true;
     } else {
@@ -88,7 +90,7 @@ exports.purchase = async (req, res) => {
     if (changed) {
   player.markModified('PlayerGuns');
   player.markModified('PlayerResources');
-  await player.save();
+  // await player.save();
 }
 
 return res.json({
