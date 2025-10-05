@@ -1,10 +1,12 @@
 const { ethers } = require('ethers');
+const crypto = require('crypto');
 
 // controllers/warzoneController.js
 const jwt = require('jsonwebtoken');
 const PlayerProfile = require('../models/PlayerProfile');
 const WarzoneNameWallet = require('../models/nameWallet');
 const NameCounter = require('../models/nameCounter');
+const { request } = require('http');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -324,15 +326,24 @@ exports.getProfile = async (req, res) => {
 
 // GET /dailyQuests/type/:type?walletAddress=0x...
 exports.getDailyQuestByType = async (req, res) => {
+  // Generate or propagate a request ID for traceability
+  // Always generate a requestId (clients are not sending one)
+  const requestId = crypto.randomBytes(16).toString('hex');
   try {
     const { walletAddress } = req.query;
     const type = Number(req.params.type);
 
+    // Expose request ID in response headers for clients
+    res.set('X-Request-Id', requestId);
+    console.log('[getDailyQuestByType] start', { requestId, walletAddress, type, ip: req?.ip });
+
     if (!walletAddress) {
-      return res.status(400).json({ success: false, error: "walletAddress is required" });
+      console.warn('[getDailyQuestByType] missing walletAddress', { requestId, ip: req.ip });
+      return res.status(400).json({ success: false, error: "walletAddress is required", requestId });
     }
     if (!Number.isFinite(type)) {
-      return res.status(400).json({ success: false, error: "type must be a number" });
+      console.warn('[getDailyQuestByType] invalid type', { requestId, type: req.params.type });
+      return res.status(400).json({ success: false, error: "type must be a number", requestId });
     }
 
     const profile = await getWalletProfile(walletAddress);
@@ -344,6 +355,8 @@ exports.getDailyQuestByType = async (req, res) => {
 
     let completed = false;
     let reward = '';
+
+    console.log("requestID: ",requestId," :: Matched ",matches);
 
     if((type == 0 || type == '0') ) {
       reward = 'Stage Runner'
@@ -385,13 +398,23 @@ exports.getDailyQuestByType = async (req, res) => {
       completed:completed ?? false,
       score: matches[0]?.progress ?? 0,
       isClaimed: matches[0]?.isClaimed ?? false,
-      reward: reward
+      reward: reward,
+      requestId
     }
 
+    console.log('[getDailyQuestByType] success', { requestId, walletAddress, type, completed: newResponse.completed, score: newResponse.score });
     return res.json({...newResponse})
   } catch (error) {
-    console.error("Error in getDailyQuestByType:", error);
-    return res.status(500).json({ success: false, error: "Server error" });
+    console.error("[getDailyQuestByType] error", { requestId, message: error?.message, stack: error?.stack });
+    // Not a rate-limit error; use 500 for server errors
+    res.set('X-Request-Id', requestId);
+    return res.status(429).json({
+      ok: false,
+      error: "Server error",
+      requestId
+    });
+
+    // return res.status(500).json({ success: false, error: "Server error" });
   }
 };
 

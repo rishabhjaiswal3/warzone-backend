@@ -49,9 +49,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Add request logging for debugging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  console.log('Origin:', req.get('Origin'));
-  console.log('User-Agent:', req.get('User-Agent'));
+  // console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  // console.log('Origin:', req.get('Origin'));
+  // console.log('User-Agent:', req.get('User-Agent'));
   next();
 });
 
@@ -94,6 +94,6 @@ mongoose.connect(process.env.MONGO_URI, {
 const PORT = process.env.PORT || 3300;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Accepting requests from: warzonewarriors.xyz`);
-  console.log(`📡 CORS enabled for cross-origin requests`);
+  // console.log(`🌐 Accepting requests from: warzonewarriors.xyz`);
+  // console.log(`📡 CORS enabled for cross-origin requests`);
 });
