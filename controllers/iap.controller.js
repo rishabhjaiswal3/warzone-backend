@@ -78,19 +78,14 @@ exports.purchase = async (req, res) => {
       }
 
       // ✅ Add the new gun
-      player.PlayerGuns[String(gunId)] = {
-        id: gunId,
-        level: 1,
-        ammo: 100000,
-        isNew: false,
-      };
-
-      // ✅ Critical for nested object save
-      player.markModified("PlayerGuns");
-
-      // ✅ Save immediately to persist the change
-      await player.save();
+      player.PlayerGuns.set(String(gunId), {
+       id: gunId,
+       level: 1,
+       ammo: 100000,
+       isNew: true
+     });
       message = `Unlocked gun: ${product} (id=${gunId})`;
+      await player.save();
       changed = true;
     } else {
       return res.status(400).json({ ok: false, message: "Unsupported category. Allowed: Coins, Gems, Guns" });
@@ -106,7 +101,8 @@ exports.purchase = async (req, res) => {
       data: {
         walletAddress: player.walletAddress,
         PlayerResources: player.PlayerResources,
-        PlayerGuns: player.PlayerGuns || {},
+        // PlayerGuns: player.PlayerGuns || {},
+        PlayerGuns: Object.fromEntries(player.PlayerGuns) // convert Map → plain object for response
         ...(purchase ? { purchase, priceEth: purchase.priceEth, price: purchase.price, currency: 'ETH' } : {})
       }
     });
