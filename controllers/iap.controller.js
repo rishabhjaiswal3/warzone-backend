@@ -133,7 +133,6 @@
 // };
 
 // controllers/iapController.js
-const ApiError = require("../utils/ApiError"); // if you don’t have this, replace with simple res.status(...)
 const PlayerProfile = require("../models/PlayerProfile");
 
 const COIN_PACKS = new Map([["100",100],["500",500],["1000",1000],["2000",2000]]);
