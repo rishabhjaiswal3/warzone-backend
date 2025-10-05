@@ -77,7 +77,19 @@ exports.purchase = async (req, res) => {
         });
       }
 
-      player.PlayerGuns[String(gunId)] = { id: gunId, level: 1, ammo: 100000, isNew: false };
+      // ✅ Add the new gun
+      player.PlayerGuns[String(gunId)] = {
+        id: gunId,
+        level: 1,
+        ammo: 100000,
+        isNew: false,
+      };
+
+      // ✅ Critical for nested object save
+      player.markModified("PlayerGuns");
+
+      // ✅ Save immediately to persist the change
+      await player.save();
       message = `Unlocked gun: ${product} (id=${gunId})`;
       changed = true;
     } else {
