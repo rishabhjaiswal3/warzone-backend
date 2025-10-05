@@ -102,7 +102,7 @@ exports.purchase = async (req, res) => {
         walletAddress: player.walletAddress,
         PlayerResources: player.PlayerResources,
         // PlayerGuns: player.PlayerGuns || {},
-        PlayerGuns: Object.fromEntries(player.PlayerGuns) // convert Map → plain object for response
+        PlayerGuns: Object.fromEntries(player.PlayerGuns), // convert Map → plain object for response
         ...(purchase ? { purchase, priceEth: purchase.priceEth, price: purchase.price, currency: 'ETH' } : {})
       }
     });
