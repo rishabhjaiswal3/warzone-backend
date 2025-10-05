@@ -39,6 +39,7 @@ function rateLimiter(options = {}) {
         res.status(429).json({
           ok: false,
           error: message,
+          status:429,
           retryAfterMs,
           retryAfterSeconds: retryAfterSec,
           resetAt: new Date(entry.expiresAt).toISOString(),

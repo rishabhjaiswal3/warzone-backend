@@ -410,7 +410,8 @@ exports.getDailyQuestByType = async (req, res) => {
     res.set('X-Request-Id', requestId);
     return res.status(429).json({
       ok: false,
-      error: "Server error",
+      status:429,
+      error: "Server Error, Please Retry ",
       requestId
     });
 
