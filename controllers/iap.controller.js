@@ -144,7 +144,7 @@ const GUN_IDS    = new Map([
   ["Bullpup",6],
   ["ScarH",2],
   ["Sniper Rifle",7],
-  ["Tesla Mini",7],
+  ["Tesla Mini",8],
   ["AWP",3],
 ]);
 
@@ -199,7 +199,7 @@ exports.purchase = async (req, res) => {
         });
       }
 
-      player.PlayerGuns[String(gunId)] = { id: gunId, level: 1, ammo: 0, isNew: false };
+      player.PlayerGuns[String(gunId)] = { id: gunId, level: 1, ammo: 50000, isNew: false };
       message = `Unlocked gun: ${product} (id=${gunId})`;
       changed = true;
     } else {
