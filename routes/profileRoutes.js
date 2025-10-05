@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getProfile, saveProfile, getLeaderboard, checkNameExistance, getDailyQuests, getDailyQuestByType, saveName, getName, login } = require('../controllers/profileController');
 const verifyUser = require('../routes/middleware/verifyUser');
+const rateLimiter = require('../routes/middleware/rateLimiter');
 
 const iapController = require('../controllers/iap.controller');
 // In-memory pricing exposure for store UI (Coins/Gems only)
@@ -10,7 +11,12 @@ const iapController = require('../controllers/iap.controller');
 router.get('/', getProfile);
 router.post('/', saveProfile);
 router.get('/dailyQuests', getDailyQuests);
-router.get('/dailyQuests/type/:type', getDailyQuestByType);
+// Apply a lightweight per-IP rate limit on this route
+router.get(
+  '/dailyQuests/type/:type',
+  rateLimiter({ windowMs: 60 * 1000, max: 20 }), // 20 requests per minute per IP
+  getDailyQuestByType
+);
 router.get('/leaderboard', getLeaderboard);
 router.post('/name', checkNameExistance);
 router.post('/saveName', verifyUser, saveName);

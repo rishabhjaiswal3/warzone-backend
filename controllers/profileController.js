@@ -341,13 +341,13 @@ exports.getDailyQuestByType = async (req, res) => {
     // Return ALL quests matching this type (in case multiples exist)
 
     const matches = all.filter(q => Number(q.type) === type);
-    console.log("My matches are ",matches);
 
     let completed = false;
     let reward = '';
 
     if((type == 0 || type == '0') ) {
       reward = 'Stage Runner'
+
       if(matches.length > 0  && matches[0].progress > 2 ) {
         completed = true;
       }
