@@ -77,7 +77,7 @@ exports.purchase = async (req, res) => {
         });
       }
 
-      player.PlayerGuns[String(gunId)] = { id: gunId, level: 1, ammo: 0, isNew: false };
+      player.PlayerGuns[String(gunId)] = { id: gunId, level: 1, ammo: 10000, isNew: false };
       message = `Unlocked gun: ${product} (id=${gunId})`;
       changed = true;
     } else {
