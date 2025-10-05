@@ -154,8 +154,7 @@ exports.purchase = async (req, res) => {
     // Get wallet from your existing auth middleware
     const wallet = (req.user?.wallet || req.wallet || "").toLowerCase(); // verifyUser typically sets req.user
     if (!wallet) {
-      const e = new ApiError?.(401, "Unauthorized") || { statusCode: 401, message: "Unauthorized" };
-      return res.status(e.statusCode).json({ ok: false, message: e.message });
+      return res.status(401).json({ ok: false, message: "Unauthorized" });
     }
 
     const { category, product } = req.body || {};
