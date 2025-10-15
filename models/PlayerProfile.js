@@ -305,7 +305,8 @@ const PlayerProfileSchema = new Schema({
 
   PlayerProfile: {
     level: { type: Number, default: 1 },
-    exp:   { type: Number, default: 0 }
+    exp:   { type: Number, default: 0 },
+    totalTimePlayed: { type: Number, default: 0}
   },
 
   PlayerResources: {
