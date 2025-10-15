@@ -551,4 +551,85 @@ exports.login = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error during authentication' });
   }
 };
-//
+//=== Achievement Quest ===
+
+// GET /achieveQuests/type/:type?walletAddress=0x...
+exports.getAchieveQuestByType = async (req, res) => {
+  // Generate or propagate a request ID for traceability
+  // Always generate a requestId (clients are not sending one)
+  const requestId = crypto.randomBytes(16).toString('hex');
+  try {
+    const { walletAddress } = req.query;
+    const type = Number(req.params.type);
+
+    // Expose request ID in response headers for clients
+    res.set('X-Request-Id', requestId);
+    console.log('[getAchieveQuestByType] start', { requestId, walletAddress, type, ip: req?.ip });
+
+    if (!walletAddress) {
+      console.warn('[getAchieveQuestByType] missing walletAddress', { requestId, ip: req.ip });
+      return res.status(400).json({ success: false, error: "walletAddress is required", requestId });
+    }
+    if (!Number.isFinite(type)) {
+      console.warn('[getAchieveQuestByType] invalid type', { requestId, type: req.params.type });
+      return res.status(400).json({ success: false, error: "type must be a number", requestId });
+    }
+
+    const profile = await getWalletProfile(walletAddress);
+    const all = Array.isArray(profile.PlayerAchievementData) ? profile.PlayerAchievementData : [];
+
+    // Return ALL quests matching this type (in case multiples exist)
+
+    const matches = all.filter(q => Number(q.type) === type);
+
+    let completed = false;
+    let reward = '';
+
+    console.log("requestID: ",requestId," :: Matched ",matches);
+
+    if(type == 4 || type == '4') {
+      reward = 'Tank Buster'
+      if(matches.length > 0 && matches[0].progress >= 20) {
+        completed = true;
+      }
+    }
+    else if(type == 23 || type == '23') {
+      reward = 'Hardcore Victor'
+      if(matches.length > 0 && matches[0].progress > 5) {
+        completed = true;
+      }
+    }
+    else if(type == 39 || type == '39') {
+      reward = 'Boss Slayer'
+      if(matches.length > 0 && matches[0].progress >= 3) {
+        completed = true;
+      }
+    }
+
+
+    const newResponse = {
+      success: true,
+      status: 200,
+      wallet: walletAddress,
+      completed:completed ?? false,
+      score: matches[0]?.progress ?? 0,
+      isClaimed: matches[0]?.isReady ?? false,
+      reward: reward,
+    }
+
+    console.log('[getAchieveQuestByType] success', { requestId, walletAddress, type, completed: newResponse.completed, score: newResponse.score });
+    return res.json({...newResponse})
+  } catch (error) {
+    console.error("[getAchieveQuestByType] error", { requestId, message: error?.message, stack: error?.stack });
+    // Not a rate-limit error; use 500 for server errors
+    res.set('X-Request-Id', requestId);
+    return res.status(429).json({
+      ok: false,
+      status:429,
+      error: "Server Error, Please Retry ",
+      requestId
+    });
+
+    // return res.status(500).json({ success: false, error: "Server error" });
+  }
+};
