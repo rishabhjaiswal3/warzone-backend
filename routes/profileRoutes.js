@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getProfile, saveProfile, getLeaderboard, checkNameExistance, getDailyQuests, getDailyQuestByType, saveName, getName, login } = require('../controllers/profileController');
+const { getProfile, saveProfile, getLeaderboard, checkNameExistance, getDailyQuests, getDailyQuestByType, getAchieveQuestByType, saveName, getName, login } = require('../controllers/profileController');
 const verifyUser = require('../routes/middleware/verifyUser');
 const rateLimiter = require('../routes/middleware/rateLimiter');
 
@@ -16,6 +16,11 @@ router.get(
   '/dailyQuests/type/:type',
   rateLimiter({ windowMs: 60 * 1000, max: 20 }), // 20 requests per minute per IP
   getDailyQuestByType
+);
+router.get(
+  '/achieveQuests/type/:type',
+  rateLimiter({ windowMs: 60 * 1000, max: 20 }), // 20 requests per minute per IP
+  getAchieveQuestByType
 );
 router.get('/leaderboard', getLeaderboard);
 router.post('/name', checkNameExistance);
