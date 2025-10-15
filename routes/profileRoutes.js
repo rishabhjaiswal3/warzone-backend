@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getProfile, saveProfile, getLeaderboard, checkNameExistance, getDailyQuests, getDailyQuestByType, getAchieveQuestByType, saveName, getName, login } = require('../controllers/profileController');
+const { getProfile, saveProfile, getLeaderboard, checkNameExistance, getDailyQuests,
+  getDailyQuestByType, getAchieveQuestByType, saveName, getName, login } = require('../controllers/profileController');
+const { getSpecificDBLeaderboard } = require('../controllers/newDBController');
 const verifyUser = require('../routes/middleware/verifyUser');
 const rateLimiter = require('../routes/middleware/rateLimiter');
 
@@ -23,6 +25,7 @@ router.get(
   getAchieveQuestByType
 );
 router.get('/leaderboard', getLeaderboard);
+router.get('/leaderboard/allTime',getSpecificDBLeaderboard)
 router.post('/name', checkNameExistance);
 router.post('/saveName', verifyUser, saveName);
 router.get('/name', verifyUser, getName);
