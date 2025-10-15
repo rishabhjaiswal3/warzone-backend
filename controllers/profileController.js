@@ -358,7 +358,7 @@ exports.getDailyQuestByType = async (req, res) => {
 
     console.log("requestID: ",requestId," :: Matched ",matches);
 
-    if((type == 0 || type == '0') ) {
+    if((type == 11 || type == '11') ) {
       reward = 'Stage Runner'
 
       if(matches.length > 0  && matches[0].progress > 2 ) {
@@ -383,7 +383,7 @@ exports.getDailyQuestByType = async (req, res) => {
         completed = true;
       }
     }
-    else if(type == 11 || type == '11') {
+    else if(type == 0 || type == '0') {
       reward = 'Boss Slayer'
       if(matches.length > 0 && matches[0].progress >= 3) {
         completed = true;
