@@ -35,6 +35,7 @@ const corsOptions = {
     'Accept',
     'Authorization',
     'Cache-Control',
+    'pragma',
     'X-HTTP-Method-Override'
   ],
   credentials: true,
