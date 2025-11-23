@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "configure:iap": "node scripts/configureIAP.js"
   },
   "keywords": [
     "web3",
