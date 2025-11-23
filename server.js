@@ -36,6 +36,8 @@ const corsOptions = {
     'Authorization',
     'Cache-Control',
     'pragma',
+    'expires',              // ← Add this
+    'if-modified-since',    // Unity caching headers
     'X-HTTP-Method-Override'
   ],
   credentials: true,
