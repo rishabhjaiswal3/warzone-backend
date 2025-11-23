@@ -14,7 +14,8 @@ const allowedOrigins = [
   'http://warzonewarriors.xyz',
   'http://localhost:3000',
   'http://localhost:3001',
-  'https://warzonewarrior.vercel.app/'
+  'https://warzonewarrior.vercel.app/',
+  'https://warzonewarrior.vercel.app'
 ];
 
 const corsOptions = {
